@@ -6,9 +6,13 @@ import {
   Scripts,
   ScrollRestoration,
 } from "react-router";
+import { Suspense } from "react";
+import { ThemeProvider } from "~/components/themeProvider";
+import { SiteHeader } from "~/components/siteHeader";
+import { SidebarNav } from "~/components/sidebarNav";
 
 import type { Route } from "./+types/root";
-import "./app.css";
+import "~/app.css";
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -25,15 +29,23 @@ export const links: Route.LinksFunction = () => [
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Railway Crossing Inventory Management System</title>
         <Meta />
         <Links />
       </head>
       <body>
-        {children}
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          {children}
+        </ThemeProvider>
         <ScrollRestoration />
         <Scripts />
       </body>
@@ -42,7 +54,19 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-  return <Outlet />;
+  return (
+    <div className="relative flex min-h-screen flex-col">
+      <SiteHeader />
+      <div className="flex flex-1">
+        <SidebarNav />
+        <main className="flex-1">
+          <Suspense fallback={<div className="p-4">Loading...</div>}>
+            <Outlet />
+          </Suspense>
+        </main>
+      </div>
+    </div>
+  );
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
