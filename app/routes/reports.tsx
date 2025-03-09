@@ -125,7 +125,7 @@ export default function ReportsPage() {
               <CardDescription>FRA Accident Prediction and Severity (APS) model results</CardDescription>
             </CardHeader>
             <CardContent className="h-[500px]">
-              <RiskAssessmentChart detailed />
+              <RiskAssessmentChart />
             </CardContent>
           </Card>
         </TabsContent>

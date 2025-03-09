@@ -17,24 +17,22 @@ export default function AdminLayout() {
         <p className="text-muted-foreground">Manage system settings and users</p>
       </div>
 
-      <Card>
-        <Tabs 
-          value={isSettingsActive ? "settings" : isUsersActive ? "users" : undefined} 
-          className="w-full"
-        >
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="settings" asChild>
-              <Link to="/admin/settings">Settings</Link>
-            </TabsTrigger>
-            <TabsTrigger value="users" asChild>
-              <Link to="/admin/users">Users</Link>
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
-        <div className="pt-6">
+      <Tabs 
+        value={isSettingsActive ? "settings" : isUsersActive ? "users" : undefined} 
+        className="w-full"
+      >
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="settings" asChild>
+            <Link to="/admin/settings">Settings</Link>
+          </TabsTrigger>
+          <TabsTrigger value="users" asChild>
+            <Link to="/admin/users">Users</Link>
+          </TabsTrigger>
+        </TabsList>
+        <div className="mt-4">
           <Outlet />
         </div>
-      </Card>
+      </Tabs>
     </div>
   );
 }
