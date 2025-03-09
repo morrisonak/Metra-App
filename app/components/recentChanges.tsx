@@ -49,7 +49,7 @@ export function RecentChanges() {
       {changes.map((change) => (
         <div className="flex items-center" key={change.id}>
           <Avatar className="h-9 w-9">
-            <AvatarImage src={`/placeholder.svg`} alt={change.user} />
+            <AvatarImage src={`/avatar.jpg`} alt={change.user} />
             <AvatarFallback>{change.userInitials}</AvatarFallback>
           </Avatar>
           <div className="ml-4 space-y-1">
