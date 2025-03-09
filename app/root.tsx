@@ -55,12 +55,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   return (
-    <div className="relative flex min-h-screen flex-col">
+    <div className="min-h-screen bg-background">
       <SiteHeader />
-      <div className="flex flex-1">
+      <div className="flex">
         <SidebarNav />
-        <main className="flex-1">
-          <Suspense fallback={<div className="p-4">Loading...</div>}>
+        <main className="flex-1 w-full">
+          <Suspense fallback={<div className="p-8 flex items-center justify-center">Loading...</div>}>
             <Outlet />
           </Suspense>
         </main>
