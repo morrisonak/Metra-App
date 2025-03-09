@@ -81,7 +81,7 @@ export function ReportFilters() {
               <SelectContent>
                 <SelectItem value="all">All Railroads</SelectItem>
                 <SelectItem value="metra">Metra</SelectItem>
-                <SelectItem value="bnsf">BNSF Railway</SelectItem>
+                <SelectItem value="bnsf">BNSF Railroad</SelectItem>
                 <SelectItem value="up">Union Pacific</SelectItem>
                 <SelectItem value="cn">Canadian National</SelectItem>
                 <SelectItem value="cp">Canadian Pacific</SelectItem>

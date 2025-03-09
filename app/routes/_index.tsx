@@ -13,7 +13,7 @@ export default function Dashboard() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
-          <p className="text-muted-foreground">Railway Crossing Inventory Management System</p>
+          <p className="text-muted-foreground">Railroad Crossing Inventory Management System</p>
         </div>
         <div className="flex items-center gap-2">
           <Button asChild>
@@ -78,7 +78,7 @@ export default function Dashboard() {
                 <Map className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-muted-foreground">Interactive map of all railway crossings</p>
+                <p className="text-sm text-muted-foreground">Interactive map of all Railroad crossings</p>
               </CardContent>
               <CardFooter>
                 <Button asChild variant="ghost" className="w-full">
@@ -163,7 +163,7 @@ export default function Dashboard() {
             <Card className="col-span-3">
               <CardHeader>
                 <CardTitle>Crossing Map</CardTitle>
-                <CardDescription>Overview of railway crossings</CardDescription>
+                <CardDescription>Overview of Railroad crossings</CardDescription>
               </CardHeader>
               <CardContent className="h-[300px]">
                 <CrossingMap />
@@ -180,8 +180,8 @@ export default function Dashboard() {
         <TabsContent value="map" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Railway Crossing Map</CardTitle>
-              <CardDescription>Interactive map of all railway crossings in the system</CardDescription>
+              <CardTitle>Railroad Crossing Map</CardTitle>
+              <CardDescription>Interactive map of all Railroad crossings in the system</CardDescription>
             </CardHeader>
             <CardContent className="h-[600px]">
               <CrossingMap fullscreen />

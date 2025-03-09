@@ -112,7 +112,7 @@ export default function CrossingsListPage() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Crossings</h2>
-          <p className="text-muted-foreground">Manage railway crossing inventory data</p>
+          <p className="text-muted-foreground">Manage Railroad crossing inventory data</p>
         </div>
         <Button asChild>
           <Link to="/crossings/new">

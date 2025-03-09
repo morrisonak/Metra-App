@@ -53,7 +53,7 @@ export default function FieldCollectionPage() {
           <Card>
             <CardHeader>
               <CardTitle>Crossing Field Data Collection</CardTitle>
-              <CardDescription>Complete the form below to collect field data for a railway crossing</CardDescription>
+              <CardDescription>Complete the form below to collect field data for a Railroad crossing</CardDescription>
             </CardHeader>
             <CardContent>
               <CrossingFieldForm />

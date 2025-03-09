@@ -1,3 +1,4 @@
+
 import { Suspense } from "react";
 import { Download, Filter } from "lucide-react";
 
@@ -52,33 +53,9 @@ export default function ReportsPage() {
             <MetricsCards />
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              <Card className="col-span-1">
-                <CardHeader>
-                  <CardTitle>Crossing Types</CardTitle>
-                  <CardDescription>Distribution of crossing types</CardDescription>
-                </CardHeader>
-                <CardContent className="h-[300px]">
-                  <CrossingTypeChart />
-                </CardContent>
-              </Card>
-              <Card className="col-span-1">
-                <CardHeader>
-                  <CardTitle>Warning Devices</CardTitle>
-                  <CardDescription>Distribution of warning device types</CardDescription>
-                </CardHeader>
-                <CardContent className="h-[300px]">
-                  <WarningDeviceChart />
-                </CardContent>
-              </Card>
-              <Card className="col-span-1">
-                <CardHeader>
-                  <CardTitle>Risk Assessment</CardTitle>
-                  <CardDescription>Distribution by risk category</CardDescription>
-                </CardHeader>
-                <CardContent className="h-[300px]">
-                  <RiskAssessmentChart />
-                </CardContent>
-              </Card>
+              <CrossingTypeChart />
+              <WarningDeviceChart />
+              <RiskAssessmentChart />
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">
@@ -91,15 +68,7 @@ export default function ReportsPage() {
                   <CrossingsByCountyChart />
                 </CardContent>
               </Card>
-              <Card className="col-span-1">
-                <CardHeader>
-                  <CardTitle>Compliance Rate Trend</CardTitle>
-                  <CardDescription>Monthly compliance rate over time</CardDescription>
-                </CardHeader>
-                <CardContent className="h-[400px]">
-                  <ComplianceRateChart />
-                </CardContent>
-              </Card>
+              <ComplianceRateChart />
             </div>
           </Suspense>
         </TabsContent>

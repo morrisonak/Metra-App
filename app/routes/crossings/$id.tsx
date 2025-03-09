@@ -65,7 +65,7 @@ export default function CrossingDetailsPage() {
 
   return (
     <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-2">
           <Button variant="outline" size="icon" asChild>
             <Link to="/crossings">
@@ -74,9 +74,9 @@ export default function CrossingDetailsPage() {
             </Link>
           </Button>
           <div>
-            <h2 className="text-3xl font-bold tracking-tight">{crossing.name}</h2>
-            <div className="flex items-center gap-2">
-              <p className="text-muted-foreground">ID: {crossing.id}</p>
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">{crossing.name}</h2>
+            <div className="flex flex-wrap items-center gap-2 mt-1">
+              <Badge className="text-xs">ID: {crossing.id}</Badge>
               <Badge
                 variant={
                   crossing.status === "Compliant"
@@ -91,22 +91,27 @@ export default function CrossingDetailsPage() {
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline">
+        <div className="flex items-center gap-2 self-end sm:self-auto">
+          <Button variant="outline" className="hidden sm:flex">
             <Download className="mr-2 h-4 w-4" />
             Export FRA Form
           </Button>
-          <Button asChild>
+          <Button asChild className="hidden sm:flex">
             <Link to={`/crossings/${crossing.id}/edit`}>
               <Edit className="mr-2 h-4 w-4" />
               Edit Crossing
+            </Link>
+          </Button>
+          <Button variant="ghost" size="icon" className="sm:hidden" asChild>
+            <Link to={`/crossings/${crossing.id}/edit`}>
+              <Edit className="h-4 w-4" />
             </Link>
           </Button>
         </div>
       </div>
 
       <Tabs defaultValue="details" className="space-y-4">
-        <TabsList>
+        <TabsList className="w-full overflow-x-auto">
           <TabsTrigger value="details">Details</TabsTrigger>
           <TabsTrigger value="location">Location</TabsTrigger>
           <TabsTrigger value="fra-data">FRA Data</TabsTrigger>
@@ -204,24 +209,24 @@ export default function CrossingDetailsPage() {
               <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
                 <div>
                   <div className="text-sm font-medium">Latitude</div>
-                  <div>{crossing.latitude}</div>
+                  <div className="text-sm md:text-base">{crossing.latitude}</div>
                 </div>
                 <div>
                   <div className="text-sm font-medium">Longitude</div>
-                  <div>{crossing.longitude}</div>
+                  <div className="text-sm md:text-base">{crossing.longitude}</div>
                 </div>
                 <div>
                   <div className="text-sm font-medium">City</div>
-                  <div>{crossing.city}</div>
+                  <div className="text-sm md:text-base">{crossing.city}</div>
                 </div>
                 <div>
                   <div className="text-sm font-medium">State</div>
-                  <div>{crossing.state}</div>
+                  <div className="text-sm md:text-base">{crossing.state}</div>
                 </div>
               </div>
 
-              <div className="h-[400px] rounded-md border">
-                <CrossingMap />
+              <div className="h-[300px] sm:h-[400px] rounded-md border">
+                <CrossingMap centerCoordinates={[crossing.longitude, crossing.latitude]} zoom={14} />
               </div>
             </CardContent>
           </Card>
@@ -234,7 +239,7 @@ export default function CrossingDetailsPage() {
               <CardDescription>Federal Railroad Administration inventory data</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div>
                   <div className="text-sm font-medium">FRA Inventory Number</div>
                   <div>{crossing.fraData.inventoryNumber}</div>
@@ -294,10 +299,10 @@ export default function CrossingDetailsPage() {
               <div className="space-y-8">
                 {crossing.history.map((item, index) => (
                   <div className="flex items-center" key={index}>
-                    <div className="mr-4 flex h-10 w-10 items-center justify-center rounded-full border">
-                      <MapPin className="h-5 w-5" />
+                    <div className="mr-4 flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full border">
+                      <MapPin className="h-4 w-4 sm:h-5 sm:w-5" />
                     </div>
-                    <div className="ml-4 space-y-1">
+                    <div className="space-y-1">
                       <p className="text-sm font-medium">{item.action}</p>
                       <p className="text-sm text-muted-foreground">
                         By {item.user} on {item.date}
@@ -310,6 +315,13 @@ export default function CrossingDetailsPage() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Mobile action buttons at bottom of screen */}
+      <div className="fixed bottom-4 right-4 flex sm:hidden gap-2">
+        <Button size="sm" variant="outline" className="rounded-full h-12 w-12 shadow-lg p-0 flex items-center justify-center">
+          <Download className="h-5 w-5" />
+        </Button>
+      </div>
     </div>
   );
 }

@@ -90,7 +90,7 @@ export function SiteHeader() {
           </SheetTrigger>
           <SheetContent side="left" className="p-0 w-[280px] max-w-[80vw]">
             <div className="flex h-16 items-center border-b px-4">
-              <div className="font-bold">Railway Crossing Inventory</div>
+              <div className="font-bold">Railroad Crossing Inventory</div>
             </div>
             <div className="py-4">
               <nav className="flex flex-col space-y-1 px-2">
@@ -139,7 +139,7 @@ export function SiteHeader() {
         
         <div className="flex items-center gap-2 flex-1">
           <Link to="/" className="flex items-center space-x-2">
-            <span className="font-bold whitespace-nowrap hidden sm:inline-block">Railway Crossing Inventory</span>
+            <span className="font-bold whitespace-nowrap hidden sm:inline-block">Railroad Crossing Inventory</span>
             <span className="font-bold whitespace-nowrap sm:hidden">RCI System</span>
           </Link>
           

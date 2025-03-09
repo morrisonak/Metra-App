@@ -1,16 +1,8 @@
-import { TrendingUp, TrendingDown, AlertTriangle } from "lucide-react";
-import { CartesianGrid, LabelList, Line, LineChart, XAxis, YAxis, ResponsiveContainer } from "recharts";
+import { TrendingDown, AlertTriangle } from "lucide-react";
+import { CartesianGrid, LabelList, Line, LineChart, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "~/components/ui/card";
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "~/components/ui/card";
-
-// Risk assessment data
+// Risk assessment data - could be moved to a data service in a real app
 const riskData = [
   { month: "January", highRisk: 18, mediumRisk: 24 },
   { month: "February", highRisk: 15, mediumRisk: 28 },
@@ -20,9 +12,17 @@ const riskData = [
   { month: "June", highRisk: 7, mediumRisk: 20 },
 ];
 
-export function RiskAssessmentChart() {
+interface RiskAssessmentChartProps {
+  detailed?: boolean;
+  className?: string;
+}
+
+export function RiskAssessmentChart({ detailed = false, className }: RiskAssessmentChartProps) {
+  // Calculate the percentage decrease from the first to last month
+  const highRiskDecrease = ((riskData[0].highRisk - riskData[riskData.length - 1].highRisk) / riskData[0].highRisk * 100).toFixed(1);
+  
   return (
-    <Card>
+    <Card className={className}>
       <CardHeader>
         <CardTitle>Risk Assessment Trend</CardTitle>
         <CardDescription>January - June 2024</CardDescription>
@@ -39,7 +39,7 @@ export function RiskAssessmentChart() {
                 bottom: 10,
               }}
             >
-              <CartesianGrid vertical={false} />
+              <CartesianGrid vertical={false} strokeDasharray="3 3" />
               <XAxis
                 dataKey="month"
                 tickLine={false}
@@ -51,6 +51,10 @@ export function RiskAssessmentChart() {
                 tickLine={false}
                 axisLine={false}
                 width={35}
+              />
+              <Tooltip 
+                formatter={(value) => [`${value} crossings`, '']}
+                labelFormatter={(label) => `${label}`}
               />
               <Line
                 dataKey="highRisk"
@@ -92,8 +96,9 @@ export function RiskAssessmentChart() {
         </div>
       </CardContent>
       <CardFooter className="flex-col items-start gap-2 text-sm">
-        <div className="flex gap-2 font-medium leading-none text-green-500">
-          <AlertTriangle className="h-4 w-4" /> High risk crossings trending down by 15.4% 
+        <div className="flex items-center gap-2 font-medium leading-none text-green-500">
+          <AlertTriangle className="h-4 w-4" /> 
+          High risk crossings trending down by {highRiskDecrease}%
           <TrendingDown className="h-4 w-4" />
         </div>
         <div className="leading-none text-muted-foreground">
