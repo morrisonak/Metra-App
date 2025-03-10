@@ -114,7 +114,7 @@ export default function Dashboard() {
                 <Settings className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-muted-foreground">Configure system settings and FRA GCIS integration</p>
+                <p className="text-sm text-muted-foreground">Configure system settings and FRA GGCIS integration</p>
               </CardContent>
               <CardFooter>
                 <Button asChild variant="ghost" className="w-full">
@@ -132,7 +132,7 @@ export default function Dashboard() {
                 <Settings className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-muted-foreground">Configure API settings and FRA GCIS integration</p>
+                <p className="text-sm text-muted-foreground">Configure API settings and FRA GGCIS integration</p>
               </CardContent>
               <CardFooter>
                 <Button asChild variant="ghost" className="w-full">

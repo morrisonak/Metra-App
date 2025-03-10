@@ -13,7 +13,7 @@ export default function SettingsPage() {
   const [formState, setFormState] = useState({
     organizationName: "Metra",
     contactEmail: "admin@metra.com",
-    apiEndpoint: "https://api.fra.dot.gov/cis",
+    apiEndpoint: "https://api.fra.dot.gov/GCIS",
     apiKey: "••••••••••••••••",
     autoSync: true,
     syncFrequency: "daily",
@@ -84,7 +84,7 @@ export default function SettingsPage() {
           <div className="space-y-4">
             <div className="grid gap-4 py-4">
               <div className="space-y-2">
-                <Label htmlFor="api-endpoint">FRA CIS API Endpoint</Label>
+                <Label htmlFor="api-endpoint">FRA GCIS API Endpoint</Label>
                 <Input
                   id="api-endpoint"
                   value={formState.apiEndpoint}

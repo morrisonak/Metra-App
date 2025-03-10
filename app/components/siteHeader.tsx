@@ -46,7 +46,7 @@ const sidebarNavItems = [
     icon: BarChart3,
   },
   {
-    title: "FRA CIS Sync",
+    title: "FRA GCIS Sync",
     href: "/sync",
     icon: Upload,
   },

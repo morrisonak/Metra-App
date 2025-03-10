@@ -38,7 +38,7 @@ export default function SyncPage() {
     <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">FRA CIS Sync</h2>
+          <h2 className="text-3xl font-bold tracking-tight">FRA GCIS Sync</h2>
           <p className="text-muted-foreground">Synchronize data with FRA Crossing Interface Systems</p>
         </div>
         <div className="flex items-center gap-2">
@@ -57,7 +57,7 @@ export default function SyncPage() {
         <Card>
           <CardHeader>
             <CardTitle>Sync in Progress</CardTitle>
-            <CardDescription>Synchronizing data with FRA CIS</CardDescription>
+            <CardDescription>Synchronizing data with FRA GCIS</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
@@ -82,7 +82,7 @@ export default function SyncPage() {
           <Card>
             <CardHeader>
               <CardTitle>Sync History</CardTitle>
-              <CardDescription>Recent synchronization activities with FRA CIS</CardDescription>
+              <CardDescription>Recent synchronization activities with FRA GCIS</CardDescription>
             </CardHeader>
             <CardContent>
               <Table>
@@ -170,7 +170,7 @@ export default function SyncPage() {
           <Card>
             <CardHeader>
               <CardTitle>Pending Changes</CardTitle>
-              <CardDescription>Changes waiting to be synchronized with FRA CIS</CardDescription>
+              <CardDescription>Changes waiting to be synchronized with FRA GCIS</CardDescription>
             </CardHeader>
             <CardContent>
               <Table>
@@ -255,7 +255,7 @@ export default function SyncPage() {
           <Card>
             <CardHeader>
               <CardTitle>Sync Settings</CardTitle>
-              <CardDescription>Configure synchronization settings with FRA CIS</CardDescription>
+              <CardDescription>Configure synchronization settings with FRA GCIS</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid gap-4 md:grid-cols-2">
@@ -288,8 +288,8 @@ export default function SyncPage() {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <h3 className="text-sm font-medium">FRA CIS API Endpoint</h3>
-                  <Input placeholder="https://api.fra.dot.gov/cis" />
+                  <h3 className="text-sm font-medium">FRA GCIS API Endpoint</h3>
+                  <Input placeholder="https://api.fra.dot.gov/GCIS" />
                 </div>
                 <div className="space-y-2">
                   <h3 className="text-sm font-medium">API Key</h3>
