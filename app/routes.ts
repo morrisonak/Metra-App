@@ -19,6 +19,9 @@ export default [
   ]),
 
   // // Field Collection
+  route("fra", "./routes/fra.tsx"),
+
+  // // Field Collection
   route("field-collection", "./routes/field-collection.tsx"),
 
   // // Map View
