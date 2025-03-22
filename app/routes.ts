@@ -18,6 +18,9 @@ export default [
     route(":id/edit", "./routes/crossings/$id.edit.tsx"),
   ]),
 
+
+  route("test", "./routes/test.tsx"), 
+
   // // Field Collection
   route("fra", "./routes/fra.tsx"),
 
