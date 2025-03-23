@@ -6,62 +6,215 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { Badge } from "~/components/ui/badge";
 import { Separator } from "~/components/ui/separator";
 import { CrossingMap } from "~/components/crossingMap";
+import { useLoaderData } from "react-router";
+import { db } from "~/lib/db";
+import { railroadCrossings } from "~/db/schema";
+import { eq } from "drizzle-orm";
 
-export default function CrossingDetailsPage() {
-  const params = useParams();
-  const id = params.id;
+// Type definition for our crossing data
+type CrossingDetail = {
+  id: string;
+  name: string | null;
+  city: string | null;
+  state: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  type: string | null;
+  warningDevice: string | null;
+  lastUpdated: string | null;
+  status: string | null;
+  roadway: {
+    name: string | null;
+    type: string | null;
+    aadt: number | null;
+    speedLimit: number | null;
+    lanes: number | null;
+  };
+  railroad: {
+    company: string | null;
+    subdivision: string | null;
+    trainCount: number | null;
+    maxSpeed: number | null;
+    tracks: number | null;
+  };
+  fraData: {
+    inventoryNumber: string;
+    reportingAgency: string | null;
+    lastSubmitted: string | null;
+    apsRiskScore: number | null;
+    apsRiskCategory: string | null;
+  };
+};
 
-  // In a real app, you would fetch the crossing data based on the ID
-  const crossing = {
-    id: id,
-    name: "Main Street Crossing",
-    city: "Chicago",
-    state: "IL",
-    latitude: 41.8781,
-    longitude: -87.6298,
-    type: "Public",
-    warningDevice: "Gates",
-    lastUpdated: "2023-12-15",
-    status: "Compliant",
-    roadway: {
-      name: "Main Street",
-      type: "City Street",
-      aadt: 12500,
-      speedLimit: 35,
-      lanes: 4,
-    },
-    railroad: {
-      company: "Metra",
-      subdivision: "North Line",
-      trainCount: 48,
-      maxSpeed: 79,
-      tracks: 2,
-    },
-    fraData: {
-      inventoryNumber: "123456A",
-      reportingAgency: "Metra",
-      lastSubmitted: "2023-12-01",
-      apsRiskScore: 0.023,
-      apsRiskCategory: "Low",
-    },
-    history: [
+// Loader function to fetch crossing details by ID
+export async function loader({ params }: { params: { id: string } }) {
+  try {
+    const id = params.id;
+    if (!id) throw new Error("Crossing ID is required");
+
+    // Fetch crossing data from database
+    const crossingData = await db.select()
+      .from(railroadCrossings)
+      .where(eq(railroadCrossings.crossing_id, id))
+      .limit(1);
+
+    if (!crossingData || crossingData.length === 0) {
+      return { 
+        success: false, 
+        error: `Crossing with ID ${id} not found` 
+      };
+    }
+
+    const data = crossingData[0];
+
+    // Format the data into our expected structure
+    const crossing: CrossingDetail = {
+      id: data.crossing_id,
+      name: data.street || data.highway_name,
+      city: data.city_name,
+      state: data.state_name,
+      latitude: data.latitude ? parseFloat(data.latitude.toString()) : null,
+      longitude: data.longitude ? parseFloat(data.longitude.toString()) : null,
+      type: data.crossing_type,
+      warningDevice: data.wd_code,
+      lastUpdated: data.revision_date?.toString() || null,
+      status: data.report_status,
+      roadway: {
+        name: data.street || data.highway_name,
+        type: data.highway_type || "Unknown",
+        aadt: data.aadt ? parseInt(data.aadt.toString()) : null,
+        speedLimit: data.speed_limit ? parseInt(data.speed_limit.toString()) : null,
+        lanes: data.traffic_lane ? parseInt(data.traffic_lane.toString()) : null,
+      },
+      railroad: {
+        company: data.railroad_name,
+        subdivision: data.railroad_subdivision,
+        trainCount: 
+          (data.total_daylight_thru_trains || 0) + 
+          (data.total_nighttime_thru_trains || 0),
+        maxSpeed: data.maximum_timetable_speed,
+        tracks: 
+          (data.number_of_main_tracks || 0) +
+          (data.number_of_siding_tracks || 0) +
+          (data.number_of_yard_tracks || 0) +
+          (data.number_of_transit_tracks || 0) +
+          (data.number_of_industry_tracks || 0)
+      },
+      fraData: {
+        inventoryNumber: data.crossing_id,
+        reportingAgency: data.reporting_agency_name,
+        lastSubmitted: data.last_update_date?.toString() || data.revision_date?.toString() || null,
+        apsRiskScore: 0.023, // Placeholder - would need to be calculated or fetched from a different source
+        apsRiskCategory: "Low" // Placeholder - would need to be calculated or fetched from a different source
+      }
+    };
+
+    // Mock history data - in a real app this would be fetched from a separate table
+    const history = [
       {
-        date: "2023-12-15",
-        user: "John Doe",
-        action: "Updated warning devices",
+        date: data.revision_date ? new Date(data.revision_date).toLocaleDateString() : "Unknown",
+        user: data.reporting_agency_name || "System",
+        action: "Updated inventory data",
       },
       {
         date: "2023-10-20",
-        user: "Jane Smith",
+        user: "Field Technician",
         action: "Field verification completed",
       },
       {
         date: "2023-08-05",
-        user: "Mike Johnson",
+        user: "System",
         action: "Initial inventory created",
       },
-    ],
+    ];
+
+    return { 
+      crossing, 
+      history,
+      success: true 
+    };
+  } catch (error) {
+    console.error("Error fetching crossing:", error);
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : "An unknown error occurred" 
+    };
+  }
+}
+
+// Helper function to determine crossing type display
+const getCrossingType = (type: string | null) => {
+  if (!type) return "Unknown";
+  
+  const typeLower = type.toLowerCase();
+  if (typeLower.includes("public")) return "Public";
+  if (typeLower.includes("private")) return "Private";
+  if (typeLower.includes("pedestrian")) return "Pedestrian";
+  return type;
+};
+
+// Helper function to determine warning device display
+const getWarningDevice = (device: string | null) => {
+  if (!device) return "Unknown";
+  
+  const deviceCode = device.toUpperCase();
+  // Map warning device codes to display names
+  const deviceMap: Record<string, string> = {
+    "GATES": "Gates",
+    "FLASH": "Flashers",
+    "CANTT": "Cantilevers",
+    "XBUCK": "Crossbucks",
+    "STOP": "Stop Signs",
+    "PASSV": "Passive",
+    "NONE": "None"
   };
+  
+  // Try to match the code with our map
+  for (const [code, name] of Object.entries(deviceMap)) {
+    if (deviceCode.includes(code)) return name;
+  }
+  
+  return device;
+};
+
+// Format date for display
+const formatDate = (dateString: string | null) => {
+  if (!dateString) return "Unknown";
+  try {
+    return new Date(dateString).toLocaleDateString();
+  } catch (error) {
+    return "Invalid Date";
+  }
+};
+
+export default function CrossingDetailsPage() {
+  const { crossing, history, success, error } = useLoaderData<typeof loader>();
+  const params = useParams();
+  const id = params.id;
+
+  // If loading failed, show error
+  if (!success) {
+    return (
+      <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="icon" asChild>
+            <Link to="/crossings">
+              <ArrowLeft className="h-4 w-4" />
+              <span className="sr-only">Back</span>
+            </Link>
+          </Button>
+          <div>
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Crossing Details</h2>
+          </div>
+        </div>
+        
+        <div className="bg-destructive/10 p-4 rounded-md text-destructive">
+          <h2 className="text-lg font-bold">Error Loading Crossing</h2>
+          <p>{error || "An unknown error occurred while loading crossing data."}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
@@ -74,9 +227,9 @@ export default function CrossingDetailsPage() {
             </Link>
           </Button>
           <div>
-            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">{crossing.name}</h2>
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">{crossing.name || "Unnamed Crossing"}</h2>
             <div className="flex flex-wrap items-center gap-2 mt-1">
-              <Badge className="text-xs">ID: {crossing.id}</Badge>
+              <Badge className="text-xs">DOT: {crossing.id}</Badge>
               <Badge
                 variant={
                   crossing.status === "Compliant"
@@ -86,7 +239,7 @@ export default function CrossingDetailsPage() {
                       : "outline"
                 }
               >
-                {crossing.status}
+                {crossing.status || "Unknown Status"}
               </Badge>
             </div>
           </div>
@@ -128,21 +281,21 @@ export default function CrossingDetailsPage() {
               <CardContent className="space-y-2">
                 <div className="grid grid-cols-2 gap-1">
                   <div className="text-sm font-medium">Name:</div>
-                  <div className="text-sm">{crossing.name}</div>
+                  <div className="text-sm">{crossing.name || "Unnamed Crossing"}</div>
 
                   <div className="text-sm font-medium">Location:</div>
                   <div className="text-sm">
-                    {crossing.city}, {crossing.state}
+                    {crossing.city || "Unknown"}, {crossing.state || "Unknown"}
                   </div>
 
                   <div className="text-sm font-medium">Type:</div>
-                  <div className="text-sm">{crossing.type}</div>
+                  <div className="text-sm">{getCrossingType(crossing.type)}</div>
 
                   <div className="text-sm font-medium">Warning Device:</div>
-                  <div className="text-sm">{crossing.warningDevice}</div>
+                  <div className="text-sm">{getWarningDevice(crossing.warningDevice)}</div>
 
                   <div className="text-sm font-medium">Last Updated:</div>
-                  <div className="text-sm">{crossing.lastUpdated}</div>
+                  <div className="text-sm">{formatDate(crossing.lastUpdated)}</div>
                 </div>
               </CardContent>
             </Card>
@@ -155,19 +308,19 @@ export default function CrossingDetailsPage() {
               <CardContent className="space-y-2">
                 <div className="grid grid-cols-2 gap-1">
                   <div className="text-sm font-medium">Road Name:</div>
-                  <div className="text-sm">{crossing.roadway.name}</div>
+                  <div className="text-sm">{crossing.roadway.name || "Unknown"}</div>
 
                   <div className="text-sm font-medium">Road Type:</div>
-                  <div className="text-sm">{crossing.roadway.type}</div>
+                  <div className="text-sm">{crossing.roadway.type || "Unknown"}</div>
 
                   <div className="text-sm font-medium">AADT:</div>
-                  <div className="text-sm">{crossing.roadway.aadt.toLocaleString()} vehicles/day</div>
+                  <div className="text-sm">{crossing.roadway.aadt ? crossing.roadway.aadt.toLocaleString() + " vehicles/day" : "Unknown"}</div>
 
                   <div className="text-sm font-medium">Speed Limit:</div>
-                  <div className="text-sm">{crossing.roadway.speedLimit} mph</div>
+                  <div className="text-sm">{crossing.roadway.speedLimit ? crossing.roadway.speedLimit + " mph" : "Unknown"}</div>
 
                   <div className="text-sm font-medium">Lanes:</div>
-                  <div className="text-sm">{crossing.roadway.lanes}</div>
+                  <div className="text-sm">{crossing.roadway.lanes || "Unknown"}</div>
                 </div>
               </CardContent>
             </Card>
@@ -180,19 +333,19 @@ export default function CrossingDetailsPage() {
               <CardContent className="space-y-2">
                 <div className="grid grid-cols-2 gap-1">
                   <div className="text-sm font-medium">Company:</div>
-                  <div className="text-sm">{crossing.railroad.company}</div>
+                  <div className="text-sm">{crossing.railroad.company || "Unknown"}</div>
 
                   <div className="text-sm font-medium">Subdivision:</div>
-                  <div className="text-sm">{crossing.railroad.subdivision}</div>
+                  <div className="text-sm">{crossing.railroad.subdivision || "Unknown"}</div>
 
                   <div className="text-sm font-medium">Daily Trains:</div>
-                  <div className="text-sm">{crossing.railroad.trainCount}</div>
+                  <div className="text-sm">{crossing.railroad.trainCount || "Unknown"}</div>
 
                   <div className="text-sm font-medium">Max Speed:</div>
-                  <div className="text-sm">{crossing.railroad.maxSpeed} mph</div>
+                  <div className="text-sm">{crossing.railroad.maxSpeed ? crossing.railroad.maxSpeed + " mph" : "Unknown"}</div>
 
                   <div className="text-sm font-medium">Tracks:</div>
-                  <div className="text-sm">{crossing.railroad.tracks}</div>
+                  <div className="text-sm">{crossing.railroad.tracks || "Unknown"}</div>
                 </div>
               </CardContent>
             </Card>
@@ -209,24 +362,37 @@ export default function CrossingDetailsPage() {
               <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
                 <div>
                   <div className="text-sm font-medium">Latitude</div>
-                  <div className="text-sm md:text-base">{crossing.latitude}</div>
+                  <div className="text-sm md:text-base">{crossing.latitude || "Unknown"}</div>
                 </div>
                 <div>
                   <div className="text-sm font-medium">Longitude</div>
-                  <div className="text-sm md:text-base">{crossing.longitude}</div>
+                  <div className="text-sm md:text-base">{crossing.longitude || "Unknown"}</div>
                 </div>
                 <div>
                   <div className="text-sm font-medium">City</div>
-                  <div className="text-sm md:text-base">{crossing.city}</div>
+                  <div className="text-sm md:text-base">{crossing.city || "Unknown"}</div>
                 </div>
                 <div>
                   <div className="text-sm font-medium">State</div>
-                  <div className="text-sm md:text-base">{crossing.state}</div>
+                  <div className="text-sm md:text-base">{crossing.state || "Unknown"}</div>
                 </div>
               </div>
 
               <div className="h-[300px] sm:h-[400px] rounded-md border">
-                <CrossingMap centerCoordinates={[crossing.longitude, crossing.latitude]} zoom={14} />
+                {crossing.latitude && crossing.longitude ? (
+                  <CrossingMap 
+                  centerCoordinates={[crossing.longitude, crossing.latitude]} 
+                  zoom={14}
+                  showSingleMarker={true}
+                />
+                ) : (
+                  <div className="flex h-full items-center justify-center text-muted-foreground">
+                    <div className="text-center">
+                      <MapPin className="mx-auto h-12 w-12 mb-2" />
+                      <p>No location coordinates available</p>
+                    </div>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -246,15 +412,15 @@ export default function CrossingDetailsPage() {
                 </div>
                 <div>
                   <div className="text-sm font-medium">Reporting Agency</div>
-                  <div>{crossing.fraData.reportingAgency}</div>
+                  <div>{crossing.fraData.reportingAgency || "Unknown"}</div>
                 </div>
                 <div>
                   <div className="text-sm font-medium">Last Submitted</div>
-                  <div>{crossing.fraData.lastSubmitted}</div>
+                  <div>{formatDate(crossing.fraData.lastSubmitted)}</div>
                 </div>
                 <div>
                   <div className="text-sm font-medium">APS Risk Score</div>
-                  <div>{crossing.fraData.apsRiskScore}</div>
+                  <div>{crossing.fraData.apsRiskScore || "Unknown"}</div>
                 </div>
               </div>
 
@@ -272,7 +438,7 @@ export default function CrossingDetailsPage() {
                       <CardTitle className="text-sm">Risk Category</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-bold">{crossing.fraData.apsRiskCategory}</div>
+                      <div className="text-2xl font-bold">{crossing.fraData.apsRiskCategory || "Unknown"}</div>
                     </CardContent>
                   </Card>
                   <Card>
@@ -280,7 +446,7 @@ export default function CrossingDetailsPage() {
                       <CardTitle className="text-sm">Predicted Accident Rate</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-bold">{crossing.fraData.apsRiskScore} accidents/year</div>
+                      <div className="text-2xl font-bold">{crossing.fraData.apsRiskScore ? `${crossing.fraData.apsRiskScore} accidents/year` : "Unknown"}</div>
                     </CardContent>
                   </Card>
                 </div>
@@ -297,7 +463,7 @@ export default function CrossingDetailsPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-8">
-                {crossing.history.map((item, index) => (
+                {history.map((item, index) => (
                   <div className="flex items-center" key={index}>
                     <div className="mr-4 flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full border">
                       <MapPin className="h-4 w-4 sm:h-5 sm:w-5" />

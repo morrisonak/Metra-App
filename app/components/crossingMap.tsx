@@ -5,14 +5,13 @@ import { Input } from "~/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
+import type { MapCrossing } from "~/routes/map";
 
-// Sample crossing data - in a real app, this would come from an API
-const crossings = [
+// Sample crossing data as fallback
+const sampleCrossings = [
   { id: "123456", name: "Main Street Crossing", coordinates: [-87.6298, 41.8781], type: "public", device: "gates" },
   { id: "789012", name: "Oak Avenue Crossing", coordinates: [-87.7831, 41.9742], type: "public", device: "flashers" },
   { id: "345678", name: "Industrial Park Access", coordinates: [-88.0834, 41.5250], type: "private", device: "passive" },
-  { id: "901234", name: "River Road Crossing", coordinates: [-88.1503, 41.7508], type: "public", device: "gates" },
-  { id: "567890", name: "County Line Road", coordinates: [-88.3201, 41.7656], type: "public", device: "flashers" },
 ];
 
 // Replace with your actual MapBox token
@@ -22,17 +21,25 @@ interface CrossingMapProps {
   fullscreen?: boolean;
   centerCoordinates?: [number, number];
   zoom?: number;
+  showSingleMarker?: boolean;
+  loadedCrossings?: MapCrossing[];
 }
 
 export function CrossingMap({ 
   fullscreen = false, 
   centerCoordinates = [-87.6298, 41.8781], // Chicago coordinates as default
-  zoom = 9 
+  zoom = 9,
+  showSingleMarker = false,
+  loadedCrossings
 }: CrossingMapProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
-  const [filteredCrossings, setFilteredCrossings] = useState(crossings);
+  
+  // Use loaded crossings if provided, otherwise use sample data
+  const allCrossings = loadedCrossings || sampleCrossings;
+  
+  const [filteredCrossings, setFilteredCrossings] = useState(allCrossings);
   const [typeFilter, setTypeFilter] = useState("all");
   const [deviceFilter, setDeviceFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
@@ -53,8 +60,13 @@ export function CrossingMap({
     map.current.on('load', () => {
       setIsMapLoaded(true);
       
-      // Add markers for each crossing
-      addMarkers(crossings);
+      if (showSingleMarker) {
+        // Add a single marker at the specified coordinates
+        addSingleMarker(centerCoordinates);
+      } else {
+        // Add markers for crossings
+        addMarkers(filteredCrossings);
+      }
     });
     
     return () => {
@@ -63,23 +75,80 @@ export function CrossingMap({
         map.current = null;
       }
     };
-  }, [centerCoordinates, zoom]);
+  }, [centerCoordinates, zoom, showSingleMarker]);
   
-  // Function to add markers to the map
-  const addMarkers = (crossingsToShow: typeof crossings) => {
+  // Re-filter crossings when the loaded crossings change
+  useEffect(() => {
+    if (loadedCrossings) {
+      setFilteredCrossings(loadedCrossings);
+    }
+  }, [loadedCrossings]);
+  
+  // Function to add a single marker to the map
+  const addSingleMarker = (coordinates: [number, number]) => {
     if (!map.current || !isMapLoaded) return;
     
     // Remove existing markers
     const markers = document.querySelectorAll('.mapboxgl-marker');
     markers.forEach(marker => marker.remove());
     
+    // Create a custom marker element
+    const markerEl = document.createElement('div');
+    markerEl.className = 'custom-marker';
+    markerEl.innerHTML = `<div class="p-1 bg-primary rounded-full shadow-lg">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
+        <circle cx="12" cy="10" r="3"/>
+      </svg>
+    </div>`;
+    
+    // Create and add the marker
+    new mapboxgl.Marker(markerEl)
+      .setLngLat(coordinates)
+      .setPopup(
+        new mapboxgl.Popup({ offset: 25 })
+          .setHTML(`
+            <h3 class="font-semibold">Railroad Crossing</h3>
+            <p>Coordinates: ${coordinates[1].toFixed(6)}, ${coordinates[0].toFixed(6)}</p>
+          `)
+      )
+      .addTo(map.current);
+  };
+  
+  // Function to add markers to the map
+  const addMarkers = (crossingsToShow: MapCrossing[]) => {
+    if (!map.current || !isMapLoaded) return;
+    
+    // Remove existing markers
+    const markers = document.querySelectorAll('.mapboxgl-marker');
+    markers.forEach(marker => marker.remove());
+    
+    // If we have too many markers, cluster them based on zoom level
+    // But for now just limit the count to prevent browser performance issues
+    const maxMarkers = 200;
+    const displayCrossings = crossingsToShow.slice(0, maxMarkers);
+    
+    // Fit bounds to the crossings if we have any
+    if (displayCrossings.length > 0 && !showSingleMarker) {
+      const bounds = new mapboxgl.LngLatBounds();
+      displayCrossings.forEach(crossing => {
+        bounds.extend(crossing.coordinates);
+      });
+      map.current.fitBounds(bounds, { padding: 50 });
+    }
+    
     // Add new markers
-    crossingsToShow.forEach(crossing => {
+    displayCrossings.forEach(crossing => {
+      // Get color based on crossing type
+      let color = "text-blue-500";
+      if (crossing.type === "private") color = "text-amber-500";
+      else if (crossing.type === "pedestrian") color = "text-green-500";
+      
       // Create a custom marker element
       const markerEl = document.createElement('div');
       markerEl.className = 'custom-marker';
       markerEl.innerHTML = `<div class="p-1 bg-white rounded-full shadow-lg">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-primary">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="${color}">
           <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
           <circle cx="12" cy="10" r="3"/>
         </svg>
@@ -95,15 +164,34 @@ export function CrossingMap({
               <p>ID: ${crossing.id}</p>
               <p>Type: ${crossing.type}</p>
               <p>Warning Device: ${crossing.device}</p>
+              <a href="/crossings/${crossing.id}" class="text-blue-500 font-medium hover:underline">View Details</a>
             `)
         )
         .addTo(map.current);
     });
+    
+    // Show info about limited markers if necessary
+    if (crossingsToShow.length > maxMarkers) {
+      const overageCount = crossingsToShow.length - maxMarkers;
+      
+      // Add an alert element to the map
+      const alertEl = document.createElement('div');
+      alertEl.className = 'bg-white p-2 rounded shadow-lg absolute bottom-4 left-4 z-10 max-w-xs';
+      alertEl.innerHTML = `
+        <p class="text-sm font-medium">Showing ${maxMarkers} of ${crossingsToShow.length} crossings</p>
+        <p class="text-xs text-muted-foreground">Use filters to narrow results</p>
+      `;
+      
+      // Add to the map container
+      mapContainer.current?.appendChild(alertEl);
+    }
   };
   
   // Handle filtering
   const applyFilters = () => {
-    let filtered = crossings;
+    if (!allCrossings) return;
+    
+    let filtered = allCrossings;
     
     // Apply type filter
     if (typeFilter !== "all") {
@@ -133,20 +221,20 @@ export function CrossingMap({
     setTypeFilter("all");
     setDeviceFilter("all");
     setSearchTerm("");
-    setFilteredCrossings(crossings);
-    addMarkers(crossings);
+    setFilteredCrossings(allCrossings);
+    addMarkers(allCrossings);
   };
   
   // Apply filters when they change
   useEffect(() => {
-    if (isMapLoaded) {
+    if (isMapLoaded && !showSingleMarker) {
       applyFilters();
     }
-  }, [isMapLoaded, typeFilter, deviceFilter, searchTerm]);
+  }, [isMapLoaded, typeFilter, deviceFilter, searchTerm, showSingleMarker]);
 
   return (
     <div className="flex h-full flex-col">
-      {fullscreen && (
+      {fullscreen && !showSingleMarker && (
         <div className="mb-4 flex flex-wrap items-center gap-2">
           <Input 
             placeholder="Search crossings..." 
@@ -195,6 +283,19 @@ export function CrossingMap({
           </div>
         )}
       </div>
+      
+      {filteredCrossings.length === 0 && isMapLoaded && !showSingleMarker && (
+        <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-10">
+          <div className="bg-white p-4 rounded-md shadow-lg text-center">
+            <MapPin className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
+            <h3 className="font-medium text-lg">No crossings found</h3>
+            <p className="text-muted-foreground">Try adjusting your filters</p>
+            <Button className="mt-2" variant="outline" onClick={resetFilters}>
+              Reset Filters
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
