@@ -20,7 +20,7 @@ const users = [
   {
     id: 1,
     name: "John Doe",
-    email: "john.doe@metra.com",
+    email: "john.doe@metrarr.com",
     role: "Administrator",
     status: "Active",
     lastActive: "2024-02-15",
@@ -28,7 +28,7 @@ const users = [
   {
     id: 2,
     name: "Jane Smith",
-    email: "jane.smith@metra.com",
+    email: "jane.smith@metrarr.com",
     role: "Field Technician",
     status: "Active",
     lastActive: "2024-02-14",
@@ -36,7 +36,7 @@ const users = [
   {
     id: 3,
     name: "Mike Johnson",
-    email: "mike.johnson@metra.com",
+    email: "mike.johnson@metrarr.com",
     role: "Data Analyst",
     status: "Active",
     lastActive: "2024-02-13",
@@ -44,7 +44,7 @@ const users = [
   {
     id: 4,
     name: "Sarah Williams",
-    email: "sarah.williams@metra.com",
+    email: "sarah.williams@metrarr.com",
     role: "Field Technician",
     status: "Inactive",
     lastActive: "2024-01-20",
@@ -52,7 +52,7 @@ const users = [
   {
     id: 5,
     name: "Robert Brown",
-    email: "robert.brown@metra.com",
+    email: "robert.brown@metrarr.com",
     role: "Manager",
     status: "Active",
     lastActive: "2024-02-12",

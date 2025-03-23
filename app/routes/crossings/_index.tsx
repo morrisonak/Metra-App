@@ -34,7 +34,7 @@ export async function loader() {
     })
     .from(railroadCrossings)
     .orderBy(desc(railroadCrossings.revision_date))
-    .limit(300);
+    .limit(50);
 
     return { 
       crossings, 

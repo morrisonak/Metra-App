@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~
 export default function SettingsPage() {
   const [formState, setFormState] = useState({
     organizationName: "Metra",
-    contactEmail: "admin@metra.com",
+    contactEmail: "admin@metrarr.com",
     apiEndpoint: "https://api.fra.dot.gov/GCIS",
     apiKey: "••••••••••••••••",
     autoSync: true,
