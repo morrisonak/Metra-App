@@ -34,9 +34,9 @@ import {
 
 const data = {
   user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
+    name: "Michael Perigee",
+    email: "michael.perigee@phasetimeinc.com",
+    avatar: "/avatars/mp-avatar.png",
   },
   navMain: [
     {
@@ -125,11 +125,11 @@ const data = {
       url: "#",
       icon: HelpCircleIcon,
     },
-    {
-      title: "Search",
-      url: "#",
-      icon: SearchIcon,
-    },
+    //{
+    //   title: "Search",
+    //   url: "#",
+    //   icon: SearchIcon,
+    // },
   ],
   documents: [
     {
@@ -137,16 +137,16 @@ const data = {
       url: "#",
       icon: DatabaseIcon,
     },
-    {
-      name: "Reports",
-      url: "#",
-      icon: ClipboardListIcon,
-    },
-    {
-      name: "Word Assistant",
-      url: "#",
-      icon: FileIcon,
-    },
+    // {
+    //   name: "Reports",
+    //   url: "#",
+    //   icon: ClipboardListIcon,
+    // },
+    // {
+    //   name: "Word Assistant",
+    //   url: "#",
+    //   icon: FileIcon,
+    // },
   ],
 };
 

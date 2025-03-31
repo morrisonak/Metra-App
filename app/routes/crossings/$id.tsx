@@ -33,17 +33,30 @@ type CrossingDetail = {
   railroad: {
     company: string | null;
     subdivision: string | null;
+    division: string | null;
     trainCount: number | null;
     maxSpeed: number | null;
     tracks: number | null;
+    milepost: string | null;
+  };
+  safety: {
+    whistleBan: string | null;
+    whistleBanDate: string | null;
+    schoolBusRoute: string | null;
+    gates: number | null;
+    flashingLights: number | null;
+    bells: number | null;
   };
   fraData: {
     inventoryNumber: string;
     reportingAgency: string | null;
+    reportingRailroad: string | null;
     lastSubmitted: string | null;
+    quietZoneId: string | null;
     apsRiskScore: number | null;
     apsRiskCategory: string | null;
-  };
+    url: string | null; // Add this line
+  }
 };
 
 // Loader function to fetch crossing details by ID
@@ -65,7 +78,34 @@ export async function loader({ params }: { params: { id: string } }) {
       };
     }
 
+    console.log("Crossing data fetched successfully:", crossingData);
     const data = crossingData[0];
+
+    // Calculate total number of trains
+    const totalTrains = (
+      (data.total_daylight_thru_trains || 0) + 
+      (data.total_nighttime_thru_trains || 0) +
+      (data.total_switching_trains || 0) +
+      (data.total_transit_trains || 0)
+    );
+
+    // Calculate total number of tracks
+    const totalTracks = (
+      (data.number_of_main_tracks || 0) +
+      (data.number_of_siding_tracks || 0) +
+      (data.number_of_yard_tracks || 0) +
+      (data.number_of_transit_tracks || 0) +
+      (data.number_of_industry_tracks || 0)
+    );
+
+    // Calculate total number of flashing lights
+    const totalFlashingLights = (
+      (data.count_flashing_light_pair || 0) +
+      (data.count_cantilever_over_lane || 0) +
+      (data.count_cantilever_no_lane || 0) +
+      (data.count_mast_mounted_flashing_light || 0) +
+      (data.count_other_flashing_lights || 0)
+    );
 
     // Format the data into our expected structure
     const crossing: CrossingDetail = {
@@ -81,7 +121,7 @@ export async function loader({ params }: { params: { id: string } }) {
       status: data.report_status,
       roadway: {
         name: data.street || data.highway_name,
-        type: data.highway_type || "Unknown",
+        type: data.crossing_purpose || "Unknown",
         aadt: data.aadt ? parseInt(data.aadt.toString()) : null,
         speedLimit: data.speed_limit ? parseInt(data.speed_limit.toString()) : null,
         lanes: data.traffic_lane ? parseInt(data.traffic_lane.toString()) : null,
@@ -89,23 +129,29 @@ export async function loader({ params }: { params: { id: string } }) {
       railroad: {
         company: data.railroad_name,
         subdivision: data.railroad_subdivision,
-        trainCount: 
-          (data.total_daylight_thru_trains || 0) + 
-          (data.total_nighttime_thru_trains || 0),
+        division: data.railroad_division,
+        trainCount: totalTrains,
         maxSpeed: data.maximum_timetable_speed,
-        tracks: 
-          (data.number_of_main_tracks || 0) +
-          (data.number_of_siding_tracks || 0) +
-          (data.number_of_yard_tracks || 0) +
-          (data.number_of_transit_tracks || 0) +
-          (data.number_of_industry_tracks || 0)
+        tracks: totalTracks,
+        milepost: data.railroad_milepost_number
+      },
+      safety: {
+        whistleBan: data.whistle_ban,
+        whistleBanDate: data.whistle_date?.toString() || null,
+        schoolBusRoute: data.school_bus_route,
+        gates: data.count_roadway_gate_arms,
+        flashingLights: totalFlashingLights,
+        bells: data.number_of_bells
       },
       fraData: {
         inventoryNumber: data.crossing_id,
         reportingAgency: data.reporting_agency_name,
+        reportingRailroad: data.reporting_railroad_company_grouping,
         lastSubmitted: data.last_update_date?.toString() || data.revision_date?.toString() || null,
+        quietZoneId: data.ccm_qz_id,
         apsRiskScore: 0.023, // Placeholder - would need to be calculated or fetched from a different source
-        apsRiskCategory: "Low" // Placeholder - would need to be calculated or fetched from a different source
+        apsRiskCategory: "Low", // Placeholder - would need to be calculated or fetched from a different source
+        url: data.url ? JSON.parse(data.url).url : null,
       }
     };
 
@@ -146,7 +192,7 @@ export async function loader({ params }: { params: { id: string } }) {
 const getCrossingType = (type: string | null) => {
   if (!type) return "Unknown";
   
-  const typeLower = type.toLowerCase();
+  const typeLower = type?.toLowerCase() || "";
   if (typeLower.includes("public")) return "Public";
   if (typeLower.includes("private")) return "Private";
   if (typeLower.includes("pedestrian")) return "Pedestrian";
@@ -177,6 +223,15 @@ const getWarningDevice = (device: string | null) => {
   return device;
 };
 
+// Helper function to determine crossing status
+const getCrossingStatus = (crossing: CrossingDetail) => {
+  if (crossing.status?.toLowerCase() === "published") return "Compliant";
+  if (crossing.status?.toLowerCase() === "inactive") return "Non-Compliant";
+  if (crossing.status?.toLowerCase() === "failed") return "Non-Compliant";
+  
+  return "Pending Review";
+};
+
 // Format date for display
 const formatDate = (dateString: string | null) => {
   if (!dateString) return "Unknown";
@@ -191,6 +246,7 @@ export default function CrossingDetailsPage() {
   const { crossing, history, success, error } = useLoaderData<typeof loader>();
   const params = useParams();
   const id = params.id;
+  const crossingStatus = success ? getCrossingStatus(crossing) : "Unknown";
 
   // If loading failed, show error
   if (!success) {
@@ -232,23 +288,28 @@ export default function CrossingDetailsPage() {
               <Badge className="text-xs">DOT: {crossing.id}</Badge>
               <Badge
                 variant={
-                  crossing.status === "Compliant"
+                  crossingStatus === "Compliant"
                     ? "default"
-                    : crossing.status === "Non-Compliant"
+                    : crossingStatus === "Non-Compliant"
                       ? "destructive"
                       : "outline"
                 }
               >
-                {crossing.status || "Unknown Status"}
+                {crossingStatus}
               </Badge>
+              {crossing.safety.whistleBan && (
+                <Badge variant="outline">Quiet Zone</Badge>
+              )}
             </div>
           </div>
         </div>
         <div className="flex items-center gap-2 self-end sm:self-auto">
-          <Button variant="outline" className="hidden sm:flex">
-            <Download className="mr-2 h-4 w-4" />
-            Export FRA Form
-          </Button>
+        <Button variant="outline" className="hidden sm:flex" asChild>
+  <a href={crossing.fraData.url} target="_blank" rel="noopener noreferrer">
+    <Download className="mr-2 h-4 w-4" />
+    Export FRA Form
+  </a>
+</Button>
           <Button asChild className="hidden sm:flex">
             <Link to={`/crossings/${crossing.id}/edit`}>
               <Edit className="mr-2 h-4 w-4" />
@@ -267,12 +328,13 @@ export default function CrossingDetailsPage() {
         <TabsList className="w-full overflow-x-auto">
           <TabsTrigger value="details">Details</TabsTrigger>
           <TabsTrigger value="location">Location</TabsTrigger>
+          <TabsTrigger value="safety">Safety</TabsTrigger>
           <TabsTrigger value="fra-data">FRA Data</TabsTrigger>
           <TabsTrigger value="history">History</TabsTrigger>
         </TabsList>
 
         <TabsContent value="details" className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 *:data-[slot=card]:shadow-xs *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card">
             <Card>
               <CardHeader>
                 <CardTitle>Crossing Information</CardTitle>
@@ -313,14 +375,14 @@ export default function CrossingDetailsPage() {
                   <div className="text-sm font-medium">Road Type:</div>
                   <div className="text-sm">{crossing.roadway.type || "Unknown"}</div>
 
-                  <div className="text-sm font-medium">AADT:</div>
-                  <div className="text-sm">{crossing.roadway.aadt ? crossing.roadway.aadt.toLocaleString() + " vehicles/day" : "Unknown"}</div>
+                  <div className="text-sm font-medium">Traffic Lanes:</div>
+                  <div className="text-sm">{crossing.roadway.lanes || "Unknown"}</div>
 
                   <div className="text-sm font-medium">Speed Limit:</div>
                   <div className="text-sm">{crossing.roadway.speedLimit ? crossing.roadway.speedLimit + " mph" : "Unknown"}</div>
 
-                  <div className="text-sm font-medium">Lanes:</div>
-                  <div className="text-sm">{crossing.roadway.lanes || "Unknown"}</div>
+                  <div className="text-sm font-medium">School Bus Route:</div>
+                  <div className="text-sm">{crossing.safety.schoolBusRoute === "Yes" ? "Yes" : "No"}</div>
                 </div>
               </CardContent>
             </Card>
@@ -335,9 +397,15 @@ export default function CrossingDetailsPage() {
                   <div className="text-sm font-medium">Company:</div>
                   <div className="text-sm">{crossing.railroad.company || "Unknown"}</div>
 
+                  <div className="text-sm font-medium">Division:</div>
+                  <div className="text-sm">{crossing.railroad.division || "Unknown"}</div>
+                  
                   <div className="text-sm font-medium">Subdivision:</div>
                   <div className="text-sm">{crossing.railroad.subdivision || "Unknown"}</div>
 
+                  <div className="text-sm font-medium">Milepost:</div>
+                  <div className="text-sm">{crossing.railroad.milepost || "Unknown"}</div>
+                  
                   <div className="text-sm font-medium">Daily Trains:</div>
                   <div className="text-sm">{crossing.railroad.trainCount || "Unknown"}</div>
 
@@ -398,6 +466,75 @@ export default function CrossingDetailsPage() {
           </Card>
         </TabsContent>
 
+        <TabsContent value="safety" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Safety Information</CardTitle>
+              <CardDescription>Warning devices and safety features</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
+                <div className="rounded-md border p-4 flex flex-col items-center justify-center text-center">
+                  <div className="text-sm font-medium">Gates</div>
+                  <div className="text-2xl font-bold mt-1">{crossing.safety.gates || 0}</div>
+                </div>
+                <div className="rounded-md border p-4 flex flex-col items-center justify-center text-center">
+                  <div className="text-sm font-medium">Flashing Lights</div>
+                  <div className="text-2xl font-bold mt-1">{crossing.safety.flashingLights || 0}</div>
+                </div>
+                <div className="rounded-md border p-4 flex flex-col items-center justify-center text-center">
+                  <div className="text-sm font-medium">Bells</div>
+                  <div className="text-2xl font-bold mt-1">{crossing.safety.bells || 0}</div>
+                </div>
+              </div>
+              
+              <Separator />
+              
+              <div className="space-y-2">
+                <h3 className="text-lg font-medium">Quiet Zone Information</h3>
+                <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
+                  <div>
+                    <div className="text-sm font-medium">Whistle Ban</div>
+                    <div>{crossing.safety.whistleBan || "None"}</div>
+                  </div>
+                  {crossing.safety.whistleBanDate && (
+                    <div>
+                      <div className="text-sm font-medium">Effective Date</div>
+                      <div>{formatDate(crossing.safety.whistleBanDate)}</div>
+                    </div>
+                  )}
+                  {crossing.fraData.quietZoneId && (
+                    <div>
+                      <div className="text-sm font-medium">Quiet Zone ID</div>
+                      <div>{crossing.fraData.quietZoneId}</div>
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              <Separator />
+              
+              <div className="space-y-2">
+                <h3 className="text-lg font-medium">Traffic Information</h3>
+                <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
+                  <div>
+                    <div className="text-sm font-medium">School Bus Route</div>
+                    <div>{crossing.safety.schoolBusRoute === "Yes" ? "Yes" : "No"}</div>
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium">Traffic Lanes</div>
+                    <div>{crossing.roadway.lanes || "Unknown"}</div>
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium">Speed Limit</div>
+                    <div>{crossing.roadway.speedLimit ? crossing.roadway.speedLimit + " mph" : "Unknown"}</div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         <TabsContent value="fra-data" className="space-y-4">
           <Card>
             <CardHeader>
@@ -415,12 +552,12 @@ export default function CrossingDetailsPage() {
                   <div>{crossing.fraData.reportingAgency || "Unknown"}</div>
                 </div>
                 <div>
-                  <div className="text-sm font-medium">Last Submitted</div>
-                  <div>{formatDate(crossing.fraData.lastSubmitted)}</div>
+                  <div className="text-sm font-medium">Railroad Company Type</div>
+                  <div>{crossing.fraData.reportingRailroad || "Unknown"}</div>
                 </div>
                 <div>
-                  <div className="text-sm font-medium">APS Risk Score</div>
-                  <div>{crossing.fraData.apsRiskScore || "Unknown"}</div>
+                  <div className="text-sm font-medium">Last Submitted</div>
+                  <div>{formatDate(crossing.fraData.lastSubmitted)}</div>
                 </div>
               </div>
 

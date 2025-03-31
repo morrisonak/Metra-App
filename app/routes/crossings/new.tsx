@@ -17,8 +17,8 @@ export default function NewCrossingPage() {
             </Link>
           </Button>
           <div>
-            <h2 className="text-3xl font-bold tracking-tight">Add New Crossing</h2>
-            <p className="text-muted-foreground">Create a new Railroad crossing record</p>
+            <h2 className="text-3xl font-bold tracking-tight">Inspections</h2>
+            <p className="text-muted-foreground">Create a new Grade Crossing Inspection</p>
           </div>
         </div>
       </div>

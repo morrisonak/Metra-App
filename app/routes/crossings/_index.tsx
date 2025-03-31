@@ -150,7 +150,7 @@ export default function CrossingsListPage() {
         <Button asChild>
           <Link to="/crossings/new">
             <Plus className="mr-2 h-4 w-4" />
-            Add New Crossing
+            Create New Inspection
           </Link>
         </Button>
       </div>
