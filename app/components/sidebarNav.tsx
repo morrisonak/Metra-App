@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router";
 import { cn } from "~/lib/utils";
-import { useIsMobile } from "~/hooks/useMobile";
+import { useIsMobile } from "~/hooks/use-mobile";
 import { 
   BarChart3, 
   ChevronLeft, 

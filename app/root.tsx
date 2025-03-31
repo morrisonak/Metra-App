@@ -8,11 +8,12 @@ import {
 } from "react-router";
 import { Suspense } from "react";
 import { ThemeProvider } from "~/components/themeProvider";
-import { SiteHeader } from "~/components/siteHeader";
-import { SidebarNav } from "~/components/sidebarNav";
+import { SiteHeader } from "~/components/site-header";
 
 import type { Route } from "./+types/root";
 import "~/app.css";
+import { SidebarInset, SidebarProvider } from "./components/ui/sidebar";
+import { AppSidebar } from "./components/app-sidebar";
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -55,17 +56,25 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   return (
-    <div className="min-h-screen bg-background">
-      <SiteHeader />
-      <div className="flex">
-        <SidebarNav />
-        <main className="flex-1 w-full">
-          <Suspense fallback={<div className="p-8 flex items-center justify-center">Loading...</div>}>
-            <Outlet />
-          </Suspense>
-        </main>
-      </div>
-    </div>
+    <SidebarProvider>
+      <AppSidebar variant="inset" />
+      <SidebarInset>
+        <SiteHeader />
+        <div className="flex flex-1 flex-col">
+          <div className="@container/main flex flex-1 flex-col gap-2">
+            <Suspense
+              fallback={
+                <div className="p-8 flex items-center justify-center">
+                  Loading...
+                </div>
+              }
+            >
+              <Outlet />
+            </Suspense>
+          </div>
+        </div>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }
 
