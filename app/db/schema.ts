@@ -152,7 +152,7 @@ export const railroadCrossings = pgTable('railroad_crossings', {
   geocoded_latitude: text('geocoded_latitude'),
   geocoded_longitude: text('geocoded_longitude'),
   url: text('url'),
-  hs_r_corridor_id: text('hs_r_corridor_id'),
+ 
 });
 
 // Type for the crossing data
