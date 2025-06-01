@@ -1,178 +1,222 @@
-// app/routes/crossings/_index.tsx
-import { useState } from "react";
-import { useLoaderData } from "react-router";
-import { Plus } from "lucide-react";
-import { Link } from "react-router";
-import { Button } from "~/components/ui/button";
-import { RailroadCrossingsTable } from "~/components/crossingDataTable";
+// app/routes/admin/seed-inspections.tsx
 import { db } from "~/lib/db";
-import { railroadCrossings } from "~/db/schema";
+import { inspections, railroadCrossings } from "~/db/schema";
 import { desc, asc, eq, or, ilike, sql } from "drizzle-orm";
 
-// Loader function to fetch crossing data with pagination and sorting
-export async function loader({ request }) {
+// Inspector names
+const managementInspectors = [
+  'John Smith',
+  'Sarah Johnson', 
+  'Michael Brown',
+  'Lisa Davis',
+  'Robert Wilson'
+];
+
+const representedInspectors = [
+  'James Anderson',
+  'Mary Thompson',
+  'David Garcia',
+  'Jennifer Martinez',
+  'Christopher Lee',
+  'Patricia Rodriguez',
+  'Daniel Lewis',
+  'Linda Walker',
+  'Mark Hall',
+  'Barbara Allen',
+  'Steven Young',
+  'Susan King',
+  'Kevin Wright',
+  'Nancy Lopez',
+  'Paul Hill'
+];
+
+// Helper function to get random item from array
+function getRandomItem<T>(array: T[]): T {
+  return array[Math.floor(Math.random() * array.length)];
+}
+
+// Helper function to get random number in range
+function getRandomInt(min: number, max: number): number {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+// Helper function to add days to date
+function addDays(date: Date, days: number): Date {
+  const result = new Date(date);
+  result.setDate(result.getDate() + days);
+  return result;
+}
+
+// Helper function to get day of week (0 = Sunday, 6 = Saturday)
+function getDayOfWeek(date: Date): number {
+  return date.getDay();
+}
+
+export async function seedInspections() {
   try {
-    // Get URL parameters for pagination and sorting
-    const url = new URL(request.url);
-    const pageIndex = parseInt(url.searchParams.get("page") || "0");
-    const pageSize = parseInt(url.searchParams.get("size") || "10");
-    const sortField = url.searchParams.get("sort") || "revision_date";
-    const sortDirection = url.searchParams.get("order") || "desc";
-
-    // Get search/filter parameters if present
-    const searchTerm = url.searchParams.get("search") || "";
-    const typeFilter = url.searchParams.get("type") || "all";
-    const statusFilter = url.searchParams.get("status") || "all";
-
-    // Calculate offset for pagination
-    const offset = pageIndex * pageSize;
-
-    // Build query for filtered results
-    let query = db.select().from(railroadCrossings);
-
-    // Add search filter if present
-    if (searchTerm) {
-      query = query.where(
-        or(
-          ilike(railroadCrossings.crossing_id, `%${searchTerm}%`),
-          ilike(railroadCrossings.street || "", `%${searchTerm}%`),
-          ilike(railroadCrossings.highway_name || "", `%${searchTerm}%`),
-          ilike(railroadCrossings.city_name || "", `%${searchTerm}%`),
-          ilike(railroadCrossings.state_name || "", `%${searchTerm}%`)
-        )
-      );
+    console.log('Starting inspection data seeding...');
+    
+    // Get a sample of crossing IDs to use for inspections
+    const crossingIds = await db
+      .select({ crossing_id: railroadCrossings.crossing_id })
+      .from(railroadCrossings)
+      .limit(100);
+    
+    if (crossingIds.length === 0) {
+      throw new Error('No crossing IDs found. Please ensure railroad_crossings table has data.');
     }
-
-    // Add type filter if present and not 'all'
-    if (typeFilter && typeFilter !== "all") {
-      query = query.where(
-        ilike(railroadCrossings.crossing_type || "", `%${typeFilter}%`)
-      );
-    }
-
-    // Add status filter if present and not 'all'
-    if (statusFilter && statusFilter !== "all") {
-      // Map the status names to DB values
-      let statusValue = "";
-      if (statusFilter === "Compliant") statusValue = "active";
-      else if (statusFilter === "Non-Compliant") statusValue = "inactive";
-      else if (statusFilter === "Pending Review") statusValue = "pending";
-
-      if (statusValue) {
-        query = query.where(
-          ilike(railroadCrossings.report_status || "", `%${statusValue}%`)
-        );
+    
+    console.log(`Found ${crossingIds.length} crossings to use for inspections`);
+    
+    // Define date range: 90 days before May 31, 2025
+    const endDate = new Date('2025-05-31');
+    const startDate = new Date('2025-03-02'); // 90 days before
+    
+    const inspectionRecords: any[] = [];
+    
+    // Generate inspections for each day
+    for (let currentDate = new Date(startDate); currentDate <= endDate; currentDate = addDays(currentDate, 1)) {
+      const dayOfWeek = getDayOfWeek(currentDate);
+      
+      // Skip weekends (0 = Sunday, 6 = Saturday)
+      if (dayOfWeek === 0 || dayOfWeek === 6) {
+        continue;
+      }
+      
+      // Calculate inspection counts based on day of week
+      let mgmtCount: number;
+      let repCount: number;
+      
+      if (dayOfWeek === 1 || dayOfWeek === 5) { // Monday or Friday - lighter days
+        mgmtCount = Math.random() < 0.3 ? 0 : getRandomInt(1, 6);
+        repCount = Math.random() < 0.3 ? 0 : getRandomInt(2, 10);
+      } else { // Tuesday-Thursday - regular days
+        mgmtCount = getRandomInt(2, 8);
+        repCount = getRandomInt(5, 15);
+      }
+      
+      // Generate management inspections
+      for (let i = 0; i < mgmtCount; i++) {
+        const randomCrossing = getRandomItem(crossingIds);
+        const randomInspector = getRandomItem(managementInspectors);
+        
+        // Create a random time during work hours (8 AM - 4 PM)
+        const workStart = new Date(currentDate);
+        workStart.setHours(8, 0, 0, 0);
+        const workEnd = new Date(currentDate);
+        workEnd.setHours(16, 0, 0, 0);
+        
+        const randomTime = new Date(workStart.getTime() + Math.random() * (workEnd.getTime() - workStart.getTime()));
+        
+        inspectionRecords.push({
+          crossing_id: randomCrossing.crossing_id,
+          inspection_date: currentDate.toISOString().split('T')[0], // YYYY-MM-DD format
+          staff_type: 'management',
+          inspector_name: randomInspector,
+          created_at: randomTime,
+        });
+      }
+      
+      // Generate represented inspections
+      for (let i = 0; i < repCount; i++) {
+        const randomCrossing = getRandomItem(crossingIds);
+        const randomInspector = getRandomItem(representedInspectors);
+        
+        // Create a random time during work hours (8 AM - 4 PM)
+        const workStart = new Date(currentDate);
+        workStart.setHours(8, 0, 0, 0);
+        const workEnd = new Date(currentDate);
+        workEnd.setHours(16, 0, 0, 0);
+        
+        const randomTime = new Date(workStart.getTime() + Math.random() * (workEnd.getTime() - workStart.getTime()));
+        
+        inspectionRecords.push({
+          crossing_id: randomCrossing.crossing_id,
+          inspection_date: currentDate.toISOString().split('T')[0], // YYYY-MM-DD format
+          staff_type: 'represented',
+          inspector_name: randomInspector,
+          created_at: randomTime,
+        });
       }
     }
-
-    // Get total count with the filters applied
-    const totalCountQuery = `SELECT COUNT(*) FROM railroad_crossings`;
-    const totalCountResult = await db.execute(sql.raw(totalCountQuery));
-
-    // Access the count value safely with a fallback
-    const totalCount = Number(totalCountResult.rows?.[0]?.count || 0);
-
-    // Add pagination and sorting
-    let sortExpression;
-    if (sortField in railroadCrossings) {
-      sortExpression =
-        sortDirection === "desc"
-          ? desc(railroadCrossings[sortField as keyof typeof railroadCrossings])
-          : asc(railroadCrossings[sortField as keyof typeof railroadCrossings]);
-    } else {
-      // Default to revision_date if the field is invalid
-      sortExpression = desc(railroadCrossings.revision_date);
+    
+    console.log(`Generated ${inspectionRecords.length} inspection records`);
+    
+    // Insert records in batches to avoid overwhelming the database
+    const batchSize = 100;
+    for (let i = 0; i < inspectionRecords.length; i += batchSize) {
+      const batch = inspectionRecords.slice(i, i + batchSize);
+      await db.insert(inspections).values(batch);
+      console.log(`Inserted batch ${Math.floor(i / batchSize) + 1} of ${Math.ceil(inspectionRecords.length / batchSize)}`);
     }
-
-    const crossings = await query
-      .limit(pageSize)
-      .offset(offset)
-      .orderBy(sortExpression);
-    console.log("Crossings:", crossings[0].report_status);
+    
+    // Get summary statistics
+    const totalRecords = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(inspections);
+    
+    const mgmtRecords = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(inspections)
+      .where(eq(inspections.staff_type, 'management'));
+    
+    const repRecords = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(inspections)
+      .where(eq(inspections.staff_type, 'represented'));
+    
+    console.log('Seeding completed successfully!');
+    console.log(`Total records: ${totalRecords[0]?.count || 0}`);
+    console.log(`Management inspections: ${mgmtRecords[0]?.count || 0}`);
+    console.log(`Represented inspections: ${repRecords[0]?.count || 0}`);
+    
     return {
-      crossings,
-      totalCount,
-      pageIndex,
-      pageSize,
-      pageCount: Math.ceil(totalCount / pageSize),
       success: true,
+      totalRecords: totalRecords[0]?.count || 0,
+      managementRecords: mgmtRecords[0]?.count || 0,
+      representedRecords: repRecords[0]?.count || 0,
     };
+    
   } catch (error) {
-    console.error("Error fetching crossings:", error);
-    return {
-      crossings: [],
-      totalCount: 0,
-      pageIndex: 0,
-      pageSize: 10,
-      pageCount: 0,
-      success: false,
-      error: error instanceof Error ? error.message : "Unknown error",
+    console.error('Error seeding inspection data:', error);
+    throw error;
+  }
+}
+
+// Or create a route to run the seeder (app/routes/admin/seed-inspections.tsx)
+
+
+export async function action({ request }: Route.ActionArgs) {
+  try {
+    // Add some basic auth check here if needed
+    const result = await seedInspections();
+    return { success: true, ...result };
+  } catch (error) {
+    console.error('Seeding error:', error);
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Unknown error' 
     };
   }
 }
 
-// Crossings page component that uses the data from the loader
-export default function CrossingsPage() {
-  const {
-    crossings,
-    success,
-    error,
-    totalCount,
-    pageIndex,
-    pageSize,
-    pageCount,
-  } = useLoaderData<typeof loader>();
-
-  // If loading failed, show error
-  if (!success) {
-    return (
-      <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
-        <div className="bg-destructive/10 p-4 rounded-md text-destructive">
-          <h2 className="text-lg font-bold">Error Loading Crossings</h2>
-          <p>
-            {error || "An unknown error occurred while loading crossing data."}
-          </p>
-        </div>
-      </div>
-    );
-  }
-
+export default function SeedInspectionsPage() {
   return (
-    <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">Crossings</h2>
-          <p className="text-muted-foreground">
-            Manage Railroad crossing inventory data
-          </p>
-        </div>
-      </div>
-
-      <RailroadCrossingsTable
-        data={crossings}
-        pagination={{
-          pageIndex,
-          pageSize,
-          pageCount,
-          onPageChange: (page) => {
-            // Update URL with new page number
-            const url = new URL(window.location.href);
-            url.searchParams.set("page", page.toString());
-            window.history.pushState({}, "", url.toString());
-            // Reload the page with the new URL
-            window.location.reload();
-          },
-          onPageSizeChange: (size) => {
-            // Update URL with new page size
-            const url = new URL(window.location.href);
-            url.searchParams.set("size", size.toString());
-            url.searchParams.set("page", "0"); // Reset to first page
-            window.history.pushState({}, "", url.toString());
-            // Reload the page with the new URL
-            window.location.reload();
-          },
-        }}
-      />
+    <div className="p-8">
+      <h1 className="text-2xl font-bold mb-4">Seed Inspection Data</h1>
+      <form method="post">
+        <button 
+          type="submit" 
+          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+        >
+          Seed Inspection Data (90 days)
+        </button>
+      </form>
+      <p className="mt-4 text-sm text-gray-600">
+        This will generate realistic inspection data for the last 90 days from May 31, 2025.
+        Management: 0-8 inspections/day, Represented: 0-15 inspections/day.
+        No inspections on weekends.
+      </p>
     </div>
   );
 }

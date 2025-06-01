@@ -1,6 +1,16 @@
 // ~/lib/schema.ts
 import { pgTable, serial, varchar, text, date, timestamp, integer, numeric, primaryKey } from "drizzle-orm/pg-core";
 
+export const inspections = pgTable('inspections', {
+  id: serial('id').primaryKey(),
+  crossing_id: text('crossing_id').references(() => railroadCrossings.crossing_id),
+  inspection_date: date('inspection_date').notNull(),
+  staff_type: text('staff_type').notNull(), // 'management' or 'represented'
+  inspector_name: text('inspector_name').notNull(),
+  created_at: timestamp('created_at').defaultNow(),
+});
+
+
 export const railroadCrossings = pgTable('railroad_crossings', {
   // Primary key
   crossing_id: text('crossing_id').primaryKey(),
