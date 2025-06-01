@@ -42,6 +42,15 @@ import {
   UserIcon,
   PlusIcon,
   CalendarIcon,
+  Save,
+  Calendar,
+  CheckCircle,
+  ClipboardList,
+  Clock,
+  ExternalLink,
+  FileText,
+  MapPin,
+  Zap,
 } from "lucide-react"
 import { Area, AreaChart, CartesianGrid, XAxis } from "recharts"
 import { z } from "zod"
@@ -75,6 +84,7 @@ import {
 } from "~/components/ui/sheet"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs"
+import { Link } from "react-router"
 
 // Schema for inspection data
 export const inspectionSchema = z.object({
@@ -575,119 +585,139 @@ function InspectionViewer({ item }: { item: z.infer<typeof inspectionSchema> }) 
   const isMobile = useIsMobile()
 
   return (
-    <Sheet>
-      <SheetTrigger asChild>
-        <Button variant="link" className="w-fit px-0 text-left text-foreground font-mono">
-          {item.crossing_id}
-        </Button>
-      </SheetTrigger>
-      <SheetContent side="right" className="flex flex-col">
-        <SheetHeader className="gap-1">
-          <SheetTitle>Inspection Details</SheetTitle>
-          <SheetDescription>
-            {item.crossing_name || "Unnamed Crossing"} • {item.crossing_id}
-          </SheetDescription>
-        </SheetHeader>
-        <div className="flex flex-1 flex-col gap-4 overflow-y-auto py-4 text-sm">
-          {!isMobile && (
-            <>
-              <ChartContainer config={chartConfig}>
-                <AreaChart
-                  accessibilityLayer
-                  data={inspectionChartData}
-                  margin={{
-                    left: 0,
-                    right: 10,
-                  }}
-                >
-                  <CartesianGrid vertical={false} />
-                  <XAxis
-                    dataKey="month"
-                    tickLine={false}
-                    axisLine={false}
-                    tickMargin={8}
-                    tickFormatter={(value) => value.slice(0, 3)}
-                    hide
-                  />
-                  <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="dot" />} />
-                  <Area
-                    dataKey="represented"
-                    type="natural"
-                    fill="var(--color-represented)"
-                    fillOpacity={0.6}
-                    stroke="var(--color-represented)"
-                    stackId="a"
-                  />
-                  <Area
-                    dataKey="management"
-                    type="natural"
-                    fill="var(--color-management)"
-                    fillOpacity={0.4}
-                    stroke="var(--color-management)"
-                    stackId="a"
-                  />
-                </AreaChart>
-              </ChartContainer>
-              <Separator />
-              <div className="grid gap-2">
-                <div className="flex gap-2 font-medium leading-none">
-                  Inspection activity trending up this quarter
-                </div>
-                <div className="text-muted-foreground">
-                  This crossing has been inspected {Math.floor(Math.random() * 10 + 5)} times in the last 6 months
-                </div>
-              </div>
-              <Separator />
-            </>
-          )}
-          <div className="grid gap-4">
-            <div className="grid gap-2">
-              <Label className="text-sm font-medium">Crossing Information</Label>
-              <div className="grid grid-cols-2 gap-2 text-sm">
-                <div>DOT Number:</div>
-                <div className="font-mono">{item.crossing_id}</div>
-                <div>Location:</div>
-                <div>{item.city}, {item.state}</div>
-              </div>
+<Sheet>
+  <SheetTrigger asChild>
+    <Button 
+      variant="link" 
+      className="justify-start px-0 h-auto font-mono text-left text-foreground hover:text-primary transition-colors"
+    >
+      {item.crossing_id}
+    </Button>
+  </SheetTrigger>
+  <SheetContent 
+    side="right" 
+    className="w-full sm:max-w-lg flex flex-col p-0 gap-0"
+  >
+    <SheetHeader className="px-6 py-4 border-b bg-muted/30">
+      <SheetTitle className="text-lg">Inspection Details</SheetTitle>
+      <SheetDescription className="text-sm text-muted-foreground">
+        {item.crossing_name || "Unnamed Crossing"} • <span className="font-mono">{item.crossing_id}</span>
+      </SheetDescription>
+    </SheetHeader>
+    
+    <div className="flex-1 overflow-y-auto px-6 py-4">
+      <div className="space-y-6">
+        {/* Crossing Information Card */}
+        <div className="rounded-lg border bg-card p-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <MapPin className="h-4 w-4 text-muted-foreground" />
+            <Label className="text-sm font-semibold">Crossing Information</Label>
+          </div>
+          <div className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
+            <div className="text-muted-foreground">DOT Number:</div>
+            <div className="font-mono font-medium">{item.crossing_id}</div>
+            <div className="text-muted-foreground">Location:</div>
+            <div className="font-medium">{item.city}, {item.state}</div>
+            <div className="text-muted-foreground">Name:</div>
+            <div className="font-medium">{item.crossing_name || "Unnamed Crossing"}</div>
+          </div>
+        </div>
+        
+        {/* Inspection Details Card */}
+        <div className="rounded-lg border bg-card p-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <ClipboardList className="h-4 w-4 text-muted-foreground" />
+            <Label className="text-sm font-semibold">Inspection Details</Label>
+          </div>
+          <div className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
+            <div className="text-muted-foreground">Date:</div>
+            <div className="font-medium">
+              {new Date(item.inspection_date).toLocaleDateString('en-US', {
+                weekday: 'short',
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+              })}
             </div>
-            
-            <div className="grid gap-2">
-              <Label className="text-sm font-medium">Inspection Details</Label>
-              <div className="grid grid-cols-2 gap-2 text-sm">
-                <div>Date:</div>
-                <div>{new Date(item.inspection_date).toLocaleDateString()}</div>
-                <div>Inspector:</div>
-                <div>{item.inspector_name}</div>
-                <div>Staff Type:</div>
-                <div className="capitalize">{item.staff_type}</div>
-                <div>Status:</div>
-                <div>
-                  <Badge variant="outline" className="text-xs">
-                    {item.status}
-                  </Badge>
-                </div>
-              </div>
+            <div className="text-muted-foreground">Inspector:</div>
+            <div className="font-medium">{item.inspector_name}</div>
+            <div className="text-muted-foreground">Staff Type:</div>
+            <div className="font-medium capitalize">{item.staff_type}</div>
+            <div className="text-muted-foreground">Status:</div>
+            <div>
+              <Badge 
+                variant={
+                  item.status === 'Completed' ? 'default' : 
+                  item.status === 'In Progress' ? 'secondary' : 
+                  'outline'
+                }
+                className="text-xs"
+              >
+                {item.status === 'Completed' && <CheckCircle className="w-3 h-3 mr-1" />}
+                {item.status === 'In Progress' && <Clock className="w-3 h-3 mr-1" />}
+                {item.status}
+              </Badge>
             </div>
-
-            <div className="grid gap-2">
-              <Label className="text-sm font-medium">Quick Actions</Label>
-              <div className="flex flex-wrap gap-2">
-                <Button size="sm" variant="outline">Mark Complete</Button>
-                <Button size="sm" variant="outline">Schedule Follow-up</Button>
-                <Button size="sm" variant="outline">Add Notes</Button>
-              </div>
+            <div className="text-muted-foreground">Priority:</div>
+            <div>
+              <Badge 
+                variant={
+                  item.priority === 'High' ? 'destructive' : 
+                  item.priority === 'Medium' ? 'secondary' : 
+                  'outline'
+                }
+                className="text-xs"
+              >
+                {item.priority}
+              </Badge>
             </div>
           </div>
         </div>
-        <SheetFooter className="mt-auto flex gap-2 sm:flex-col sm:space-x-0">
-          <Button className="w-full">Update Inspection</Button>
-          <SheetClose asChild>
-            <Button variant="outline" className="w-full">
-              Close
+
+        {/* Quick Actions Card */}
+        <div className="rounded-lg border bg-card p-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <Zap className="h-4 w-4 text-muted-foreground" />
+            <Label className="text-sm font-semibold">Quick Actions</Label>
+          </div> <div className="grid grid-cols-1 gap-2">
+            <Button size="sm" variant="outline" className="justify-start">
+              <CheckCircle className="w-4 h-4 mr-2" />
+              Mark Complete
             </Button>
-          </SheetClose>
-        </SheetFooter>
-      </SheetContent>
-    </Sheet>
+            <Button size="sm" variant="outline" className="justify-start">
+              <Calendar className="w-4 h-4 mr-2" />
+              Schedule Follow-up
+            </Button>
+            <Button size="sm" variant="outline" className="justify-start">
+              <FileText className="w-4 h-4 mr-2" />
+              Add Notes
+            </Button>
+           <Button size="sm" variant="outline" className="justify-start" asChild>
+              <Link to={`/crossings/${item.crossing_id}`}>
+                <ExternalLink className="w-4 h-4 mr-2" />
+                View Full Details
+              </Link>
+            </Button>
+          </div>
+         
+        </div>
+      </div>
+    </div>
+    
+    <SheetFooter className="border-t bg-muted/30 px-6 py-4 mt-auto">
+      <div className="flex flex-col gap-2 w-full sm:flex-row">
+        <Button className="flex-1">
+          <Save className="w-4 h-4 mr-2" />
+          Update Inspection
+        </Button>
+        <SheetClose asChild>
+          <Button variant="outline" className="flex-1">
+            Close
+          </Button>
+        </SheetClose>
+      </div>
+    </SheetFooter>
+  </SheetContent>
+</Sheet>
   )
 }
