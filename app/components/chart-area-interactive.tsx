@@ -1,14 +1,30 @@
 // app/components/chart-area-interactive.tsx
 
+import * as React from "react";
+import { Area, AreaChart, CartesianGrid, XAxis } from "recharts";
 
-import * as React from "react"
-import { Area, AreaChart, CartesianGrid, XAxis } from "recharts"
-
-import { useIsMobile } from "~/hooks/use-mobile"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card"
-import { type ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "~/components/ui/chart"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select"
-import { ToggleGroup, ToggleGroupItem } from "~/components/ui/toggle-group"
+import { useIsMobile } from "~/hooks/use-mobile";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "~/components/ui/card";
+import {
+  type ChartConfig,
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "~/components/ui/chart";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "~/components/ui/select";
+import { ToggleGroup, ToggleGroupItem } from "~/components/ui/toggle-group";
 
 const chartConfig = {
   management: {
@@ -19,7 +35,7 @@ const chartConfig = {
     label: "Represented",
     color: "hsl(var(--chart-2))",
   },
-} satisfies ChartConfig
+} satisfies ChartConfig;
 
 interface ChartData {
   date: string;
@@ -34,46 +50,49 @@ interface ChartAreaInteractiveProps {
   lastUpdated?: string;
 }
 
-export function ChartAreaInteractive({ 
-  chartData = [], 
-  success = true, 
-  error = null, 
-  lastUpdated 
+export function ChartAreaInteractive({
+  chartData = [],
+  success = true,
+  error = null,
+  lastUpdated,
 }: ChartAreaInteractiveProps) {
-  const isMobile = useIsMobile()
-  const [timeRange, setTimeRange] = React.useState("30d")
+  const isMobile = useIsMobile();
+  const [timeRange, setTimeRange] = React.useState("30d");
 
   React.useEffect(() => {
     if (isMobile) {
-      setTimeRange("7d")
+      setTimeRange("7d");
     }
-  }, [isMobile])
+  }, [isMobile]);
 
   // Filter data based on selected time range (relative to today)
   const filteredData = React.useMemo(() => {
-    if (!chartData.length) return []
-    
-    const today = new Date()
-    let daysToSubtract = 90
+    if (!chartData.length) return [];
+
+    const today = new Date();
+    let daysToSubtract = 90;
     if (timeRange === "30d") {
-      daysToSubtract = 30
+      daysToSubtract = 30;
     } else if (timeRange === "7d") {
-      daysToSubtract = 7
+      daysToSubtract = 7;
     }
-    
-    const startDate = new Date(today)
-    startDate.setDate(today.getDate() - daysToSubtract)
-    
+
+    const startDate = new Date(today);
+    startDate.setDate(today.getDate() - daysToSubtract);
+
     return chartData.filter((item) => {
-      const itemDate = new Date(item.date)
-      return itemDate >= startDate && itemDate <= today
-    })
-  }, [chartData, timeRange])
+      const itemDate = new Date(item.date);
+      return itemDate >= startDate && itemDate <= today;
+    });
+  }, [chartData, timeRange]);
 
   // Calculate total inspections for the current period
   const totalInspections = React.useMemo(() => {
-    return filteredData.reduce((sum, item) => sum + item.management + item.represented, 0)
-  }, [filteredData])
+    return filteredData.reduce(
+      (sum, item) => sum + item.management + item.represented,
+      0
+    );
+  }, [filteredData]);
 
   // Show error state if data loading failed
   if (!success) {
@@ -90,7 +109,7 @@ export function ChartAreaInteractive({
           </div>
         </CardContent>
       </Card>
-    )
+    );
   }
 
   return (
@@ -127,7 +146,10 @@ export function ChartAreaInteractive({
             </ToggleGroupItem>
           </ToggleGroup>
           <Select value={timeRange} onValueChange={setTimeRange}>
-            <SelectTrigger className="@[767px]/card:hidden flex w-40" aria-label="Select a value">
+            <SelectTrigger
+              className="@[767px]/card:hidden flex w-40"
+              aria-label="Select a value"
+            >
               <SelectValue placeholder="Last 3 months" />
             </SelectTrigger>
             <SelectContent className="rounded-xl">
@@ -145,16 +167,35 @@ export function ChartAreaInteractive({
         </div>
       </CardHeader>
       <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
-        <ChartContainer config={chartConfig} className="aspect-auto h-[250px] w-full">
+        <ChartContainer
+          config={chartConfig}
+          className="aspect-auto h-[250px] w-full"
+        >
           <AreaChart data={filteredData}>
             <defs>
               <linearGradient id="fillManagement" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="var(--color-management)" stopOpacity={1.0} />
-                <stop offset="95%" stopColor="var(--color-management)" stopOpacity={0.1} />
+                <stop
+                  offset="5%"
+                  stopColor="var(--color-management)"
+                  stopOpacity={1.0}
+                />
+                <stop
+                  offset="95%"
+                  stopColor="var(--color-management)"
+                  stopOpacity={0.1}
+                />
               </linearGradient>
               <linearGradient id="fillRepresented" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="var(--color-represented)" stopOpacity={0.8} />
-                <stop offset="95%" stopColor="var(--color-represented)" stopOpacity={0.1} />
+                <stop
+                  offset="5%"
+                  stopColor="var(--color-represented)"
+                  stopOpacity={0.8}
+                />
+                <stop
+                  offset="95%"
+                  stopColor="var(--color-represented)"
+                  stopOpacity={0.1}
+                />
               </linearGradient>
             </defs>
             <CartesianGrid vertical={false} />
@@ -165,11 +206,11 @@ export function ChartAreaInteractive({
               tickMargin={8}
               minTickGap={32}
               tickFormatter={(value) => {
-                const date = new Date(value)
+                const date = new Date(value);
                 return date.toLocaleDateString("en-US", {
                   month: "short",
                   day: "numeric",
-                })
+                });
               }}
             />
             <ChartTooltip
@@ -181,29 +222,29 @@ export function ChartAreaInteractive({
                       month: "short",
                       day: "numeric",
                       year: "numeric",
-                    })
+                    });
                   }}
                   indicator="dot"
                 />
               }
             />
-            <Area 
-              dataKey="represented" 
-              type="natural" 
-              fill="url(#fillRepresented)" 
-              stroke="var(--color-represented)" 
-              stackId="a" 
+            <Area
+              dataKey="represented"
+              type="natural"
+              fill="url(#fillRepresented)"
+              stroke="var(--color-represented)"
+              stackId="a"
             />
-            <Area 
-              dataKey="management" 
-              type="natural" 
-              fill="url(#fillManagement)" 
-              stroke="var(--color-management)" 
-              stackId="a" 
+            <Area
+              dataKey="management"
+              type="natural"
+              fill="url(#fillManagement)"
+              stroke="var(--color-management)"
+              stackId="a"
             />
           </AreaChart>
         </ChartContainer>
       </CardContent>
     </Card>
-  )
+  );
 }
