@@ -42,7 +42,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 // FRA API Constants
 const FRA_API_BASE_URL =
   "https://safetydata.fra.dot.gov/MasterWebService/PublicApi/GCIS/v1/odata";
-const FRA_API_TOKEN = "a2000d6ff83f70cca046dd89d2cdb595";
+const FRA_API_TOKEN = import.meta.env.VITE_FRA_API_TOKEN || "";
 
 // Types for API responses
 type Crossing = {

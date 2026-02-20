@@ -14,8 +14,8 @@ const sampleCrossings = [
   { id: "345678", name: "Industrial Park Access", coordinates: [-88.0834, 41.5250], type: "private", device: "passive" },
 ];
 
-// Replace with your actual MapBox token
-const MAPBOX_TOKEN = 'pk.eyJ1IjoibW9ycmlzb25hayIsImEiOiJjbDdwOGh2OXQyMDhlM29tcWNuajdpdGV0In0.qSeAKGs8erp-QGCDXMTy0g';
+// Set MAPBOX_TOKEN in your environment variables
+const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN || '';
 
 interface CrossingMapProps {
   fullscreen?: boolean;
